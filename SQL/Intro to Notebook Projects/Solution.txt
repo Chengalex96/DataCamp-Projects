@@ -1,0 +1,4 @@
+-- Make sure this is copied to a SQL cell that is outputting a DataFrame called 'solution'
+SELECT customer_id
+FROM sales.orders
+WHERE order_id = 10
