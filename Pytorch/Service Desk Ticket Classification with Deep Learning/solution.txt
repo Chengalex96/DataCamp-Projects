@@ -1,0 +1,74 @@
+import torch
+import torch.nn as nn
+from torch.utils.data import TensorDataset, DataLoader
+from torchmetrics import Accuracy, Precision, Recall
+
+batch_size = 400
+train_loader = DataLoader(train_data, shuffle=True, batch_size=batch_size)
+test_loader = DataLoader(test_data, shuffle=False, batch_size=batch_size)
+
+# Define the classifier class
+class TicketClassifier(nn.Module):
+    def __init__(self, vocab_size, embed_dim, target_size):
+        super(TicketClassifier, self).__init__()
+        self.embedding = nn.Embedding(vocab_size, embed_dim)
+        self.conv = nn.Conv1d(embed_dim, embed_dim, kernel_size=3, stride=1, padding=1)
+        self.fc = nn.Linear(embed_dim, target_size)
+
+    def forward(self, text):
+        embedded = self.embedding(text).permute(0, 2, 1)
+        conved = F.relu(self.conv(embedded))
+        conved = conved.mean(dim=2) 
+        return self.fc(conved)
+
+
+vocab_size = len(word2idx) + 1
+target_size = len(np.unique(labels))
+embedding_dim = 64
+
+# Create an instance of the TicketClassifier class
+model = TicketClassifier(vocab_size, embedding_dim, target_size)
+
+lr = 0.05
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+
+epochs = 3
+
+# Train the model
+model.train()
+for i in range(epochs):
+    running_loss, num_processed = 0,0
+    for inputs, labels in train_loader:
+        model.zero_grad()
+        output = model(inputs)
+        loss = criterion(output, labels)
+        loss.backward()
+        optimizer.step()
+        running_loss += loss.item()
+        num_processed += len(inputs)
+    print(f"Epoch: {i+1}, Loss: {running_loss/num_processed}")
+
+
+accuracy_metric = Accuracy(task='multiclass', num_classes=5)
+precision_metric = Precision(task='multiclass', num_classes=5, average=None)
+recall_metric = Recall(task='multiclass', num_classes=5, average=None)
+
+# Evaluate model on test set
+model.eval()
+predicted = []
+
+for i, (inputs, labels) in enumerate(test_loader):
+    output = model(inputs)
+    cat = torch.argmax(output, dim=-1)
+    predicted.extend(cat.tolist())
+    accuracy_metric(cat, labels)
+    precision_metric(cat, labels)
+    recall_metric(cat, labels)
+
+accuracy = accuracy_metric.compute().item()
+precision = precision_metric.compute().tolist()
+recall = recall_metric.compute().tolist()
+print('Accuracy:', accuracy)
+print('Precision (per class):', precision)
+print('Recall (per class):', recall)
