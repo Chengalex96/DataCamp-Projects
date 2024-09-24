@@ -18,6 +18,7 @@ from pydub import AudioSegment
 
 import spacy
 
+
 # Task 1 - Speech to Text: convert the sample audio call, sample_customer_call.wav, to text and store the result in transcribed_text
 
 # Define a recognizer object
