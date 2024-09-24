@@ -16,6 +16,7 @@ image_size = train_data[0][0].shape[1]
 
 # Define CNN
 class MultiClassImageClassifier(nn.Module):
+
   
     # Define the init method
     def __init__(self, num_classes):
